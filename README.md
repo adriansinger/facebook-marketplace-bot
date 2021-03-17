@@ -1,0 +1,1 @@
+This first part of ths script will scrape queried item from Facebook marketplace and store scraped data in a MySQL table. The second portion of this script will analyze this data and is a work in progress.
