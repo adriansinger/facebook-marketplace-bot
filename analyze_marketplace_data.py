@@ -2,13 +2,11 @@ import mysql.connector
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+from price_comparison_tool import get_login_creds
 
-
-f = open(r'C:\Users\asing\Python\FB_Marketplace_Price\login.txt',"r")
-lines = [line.strip() for line in f]
-sql_user = lines[2]
-sql_password = lines[3]
-f.close()
+full_creds = get_login_creds()
+sql_user = full_creds[2]
+sql_password = full_creds[3]
 
 db = mysql.connector.connect(
 	host = 'localhost',
@@ -31,9 +29,13 @@ title_price_query = """
 					"""
 
  
-
 def view_data(cursor):
-	view_query = 'SELECT title, price FROM items3 WHERE category = "Monitor"'
+	view_query = """
+                SELECT urlID 
+                FROM items3 
+                GROUP BY urlID 
+                HAVING COUNT(urlID) > 1
+                """
 	cursor.execute(view_query)
 	print(mycursor.fetchall())
 
@@ -85,7 +87,7 @@ def hist_plt (data):
 
 
 #update_data(mycursor,None,0)
-view_data(mycursor)
+#view_data(mycursor)
 #print(get_tuple_data(mycursor, title_price_query)
 #get_price_info(get_single_data(mycursor, price_query))
 #scatter_plt(get_single_data(mycursor, title_price_query))
