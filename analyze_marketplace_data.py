@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from price_comparison_tool import get_login_creds
+import datetime
 
 full_creds = get_login_creds()
 sql_user = full_creds[2]
@@ -23,20 +24,26 @@ price_query = """
               WHERE category = 'Smoker'
 			  """
 
+price_date_query =  """
+                    SELECT price, recent_date_scraped
+                    FROM items3 
+                    WHERE category = 'Smoker' 
+                    AND month(recent_date_scraped) < month(curdate())
+                    """
+
 title_price_query = """
 					SELECT itemID, price
 					FROM items3
                     WHERE category = 'Smoker'
 					"""
 
- 
-def view_data(cursor):
+
+
+def view_data(cursor, search_date):
 	view_query = """
-                SELECT title, urlID 
+                SELECT price, recent_date_scraped
                 FROM items3 
-                WHERE category = 'Smoker'
-                AND price > 50
-                AND price < 100
+                WHERE month(recent_date_scraped) < month(curdate())
                 """
 	cursor.execute(view_query)
 	print(mycursor.fetchall())
@@ -53,10 +60,10 @@ def remove_irrelevant(cursor):
     cursor.execute(clean_query)
     db.commit()
 
-def update_data(cursor, old_val, new_val):
-	update_query = 'UPDATE items2 SET price = %s WHERE price = %s'
-	input_data = (old_val,new_val)
-	cursor.execute(update_query, input_data)
+def update_data(cursor):
+	update_query = 'UPDATE items3 SET recent_date_scraped = CONVERT(recent_date_scraped, date)'
+	#input_data = (old_val,new_val)
+	cursor.execute(update_query)
 	db.commit()
 
 #Extracts single values into a list of int/str 
@@ -72,17 +79,23 @@ def get_tuple_data(cursor, query):
 	cursor.execute(query)
 	rows = cursor.fetchall()
 	raw_tuple = [data for data in rows]
-	price_tuple = [tup for tup in raw_tuple if tup[1] is not None if tup[1] < 1000] #This crudely removes outliers, need a way which respects the different price ranges
+	price_tuple = [tup for tup in raw_tuple]  #if tup[1] is not None if tup[1] < 1000] #This crudely removes outliers, need a way which respects the different price ranges
 	return(price_tuple) 
 
 	#return pd.DataFrame(cursor.fetchall()) #This is one approach, but may be more effective to just plot straight from the output list
+	
 
 def get_price_info(data):
-    data_array = np.array(data)
+    if isinstance(data[1], int): #If lets this accept data from single value or tuple source
+        data_array = np.array(data)
+    elif isinstance(data[1], tuple):
+        price_lst, date_lst = zip(*data)
+        data_array = np.array(price_lst)
     lowest_price = np.min(data_array[np.nonzero(data_array)])
-    average_price = np.mean(data)
-    median_price = np.median(data)
+    average_price = np.mean(data_array)
+    median_price = np.median(data_array)
     print('Lowest price: ', lowest_price, '\n\nAverage Price: ',average_price, '\n\n Median Price: ',median_price)
+
 
 def scatter_plt (data):
 	if isinstance(data[1], int): #If lets this accept data from single value or tuple source
@@ -100,11 +113,14 @@ def hist_plt (data):
 	plt.show()
 
 
-view_data(mycursor)
-# remove_irrelevant(mycursor)
-#update_data(mycursor,None,0)
+##Example uses for each function below
+
+#update_data(mycursor)
+#view_data(mycursor, datetime.date(2021,3,1))
+#remove_irrelevant(mycursor)
 #print(get_tuple_data(mycursor, title_price_query)
-#get_price_info(get_single_data(mycursor, price_query))
+get_price_info(get_single_data(mycursor, price_query))
+#get_price_info(get_tuple_data(mycursor, price_date_query))
 #scatter_plt(get_single_data(mycursor, title_price_query))
 #scatter_plt(get_tuple_data(mycursor, title_price_query))
 #hist_plt(get_single_data(mycursor,price_query))
