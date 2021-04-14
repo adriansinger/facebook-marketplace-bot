@@ -9,10 +9,11 @@ from selenium.common.exceptions import ElementClickInterceptedException, Timeout
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver import ActionChains
 from selenium.webdriver.firefox.options import Options
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from sys import exit
 import time
 
+#Function needed to extract login credentials
 def get_login_creds():
     f = open(r'C:\Users\asing\Python\FB_Marketplace_Price\login.txt',"r")
     lines = [line.strip() for line in f]
@@ -37,7 +38,12 @@ class facebookApp():
         self.driver.get(self.main_url)
         self.db = mysql.connector.connect(host='localhost',user=sql_user,passwd=sql_password, database='facebook_marketplace_items')
         time.sleep(5)
-    
+
+    #Creates table for storing scraped data
+    def create_table(self):
+        mycursor = self.db.cursor()
+        mycursor.execute('CREATE TABLE items4 (itemID int PRIMARY KEY AUTO_INCREMENT, urlID LONGTEXT UNIQUE, title LONGTEXT, price int UNSIGNED, description LONGTEXT, category VARCHAR(100), first_date_scraped DATETIME NOT NULL, recent_date_scraped DATETIME NOT NULL)') #Unsigned means it's always positive, the itemID could be the item URI
+
     def login(self):
         try: 
             email_input = self.driver.find_element_by_id('email')
@@ -151,7 +157,7 @@ class facebookApp():
                 description = ""
             
             urlId = url.split('/item/')[1]
-            scraped_date = datetime.now()
+            scraped_date = date.today() #Using a datetime object that does not include time
 
           
             #print('URL_ID:',urlId,'\nTitle:',title, '\nPrice:',price,'\nDescription:',description,'\nDate_Scraped:',scraped_date, '\nCategory:',category, '\n')
@@ -177,6 +183,8 @@ class facebookApp():
         viewquery = 'SELECT * FROM items3' #Change query depending on the output data you want to view
         mycursor.execute(viewquery)
         print(mycursor.fetchall())
+
+
 
         self.driver.quit()
 
