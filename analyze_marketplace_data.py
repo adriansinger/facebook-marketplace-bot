@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from price_comparison_tool import get_login_creds
-import datetime
+from datetime import datetime
 
 def price_stats(data):
 	avg_price = data['price'].mean()
@@ -13,9 +13,9 @@ def price_stats(data):
 	print('Average price is: ', avg_price, '\nMedian price is: ', median_price, '\nLowest price is: ', lowest_price)
 
 #Adding sold qualifier if most recent date scraped is less than today only works if running the scraper daily
-def add_sold(data):
-	to_datetime_data = datetime.datetime.strptime(data, '%Y-%m-%d') #Recent date scraped is in string format, need to revert to datetime to do comparison
-	if to_datetime_data < datetime.datetime.now():
+def add_sold(data, curr_scrape_date):
+	to_datetime_data = datetime.strptime(data, '%Y-%m-%d') #Recent date scraped is in string format, need to revert to datetime to do comparison
+	if to_datetime_data < curr_scrape_date:
 		return True
 	else:
 		return False
@@ -50,9 +50,13 @@ def sql_to_csv():
 
 def main():
 	#sql_to_csv()
-
 	raw_data = pd.read_csv('most_recent_fb_data.csv')
+
+	curr_scrape_date = datetime.strptime(max(raw_data['recent_date_scraped']), '%Y-%m-%d')
+	raw_data['is_sold'] = (raw_data['recent_date_scraped'].apply(add_sold, args=(curr_scrape_date,)))
+
 	raw_data['is_valid_price'] = raw_data['price'].apply(id_valid_price)
-	print(raw_data.loc[raw_data['is_valid_price']=='Invalid'])
+
+	print(raw_data.loc[raw_data['is_sold']==True])
 
 main()
