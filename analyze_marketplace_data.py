@@ -24,10 +24,10 @@ def add_sold(data):
 #Function expects single data item, to be applied to each row
 def id_valid_price(data):
 	invalid_values_list = ['0', '1', '123', '1234', '12345', '99999'] #Int are not iterable so need to cast to str
-	if any(inval in str(data) for inval in invalid_values_list): 
-		return 'Valid'
-	else:
+	if str(data) in invalid_values_list: 
 		return 'Invalid'
+	else:
+		return 'Valid'
 
 
 #MySQL is failing with frequent SQL reads, so going to write the db to a csv for testing purposes
