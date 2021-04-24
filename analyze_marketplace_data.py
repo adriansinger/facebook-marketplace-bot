@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from price_comparison_tool import get_login_creds
-from datetime import datetime
+from datetime import datetime, date
 
 def price_stats(data):
 	avg_price = data['price'].mean()
@@ -28,6 +28,11 @@ def id_valid_price(data):
 		return 'Invalid'
 	else:
 		return 'Valid'
+
+#Function adds a column of datetime.timedelta values calculating the number of days an item took to sell
+def add_time_to_sell(first_date, recent_date):
+	delta = datetime.strptime(recent_date, '%Y-%m-%d') - datetime.strptime(first_date, '%Y-%m-%d')
+	return delta
 
 
 #MySQL is failing with frequent SQL reads, so going to write the db to a csv for testing purposes
@@ -54,9 +59,10 @@ def main():
 
 	curr_scrape_date = datetime.strptime(max(raw_data['recent_date_scraped']), '%Y-%m-%d')
 	raw_data['is_sold'] = (raw_data['recent_date_scraped'].apply(add_sold, args=(curr_scrape_date,)))
-
 	raw_data['is_valid_price'] = raw_data['price'].apply(id_valid_price)
+	raw_data['days_to_sell'] = raw_data.apply(lambda x: add_time_to_sell(x['first_date_scraped'], x['recent_date_scraped']), axis=1)
 
 	print(raw_data.loc[raw_data['is_sold']==True])
+
 
 main()
